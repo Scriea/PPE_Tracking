@@ -90,7 +90,8 @@ ENV/
 env.bak/
 venv.bak/
 junk/
-ByteTrack
+ByteTrack/
+models/sort/
 # deep_sort/
 
 # Spyder project settings

@@ -63,7 +63,7 @@ history = deque()
 while cap.isOpened():
     ret, frame = cap.read()
     if ret:
-        results = model.predict(frame, conf= 0.2, iou = 0.4, verbose = False)
+        results = model.predict(frame, iou = 0.3, verbose = False)
         detections = Detection.from_results(pred=results[0].boxes.data.detach().cpu().numpy(), names= ID2CLASSES)
         ## Filter detections by class
 
@@ -101,6 +101,7 @@ while cap.isOpened():
         frame = results[0].plot()
         r = 800 / frame.shape[1]
         dim = (800, int(frame.shape[0] * r))
+        print(tracked_detections)
         cv2.imshow("Image", cv2.resize(annotated_frame, dim, cv2.INTER_AREA))
 
     if cv2.waitKey(1) == ord('q'):

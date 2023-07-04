@@ -118,6 +118,9 @@ class Detection:
                 confidence=float(confidence)
             ))
         return result
+    
+    def get_ids(self):
+        return self.tracker_id, self.class_name, round(self.confidence,2)
 
 
 def filter_detections_by_class(detections: List[Detection], class_name: str) -> List[Detection]:

@@ -76,6 +76,10 @@ class Rect:
     def center(self) -> Point:
         return Point(x=self.x + self.width / 2, y=self.y + self.height / 2)
 
+    @property
+    def get_dimensions(self) -> Tuple[float, float]:
+        return self.width, self.height
+
     def pad(self, padding: float) -> Rect:
         return Rect(
             x=self.x - padding, 
@@ -163,10 +167,6 @@ def match_detections_with_tracks(
     return detections
 
 
-
-
-
-
 # draw utilities
 
 @dataclass(frozen=True)
@@ -206,7 +206,7 @@ def draw_filled_polygon(image: np.ndarray, countour: np.ndarray, color: Color) -
 
 
 def draw_text(image: np.ndarray, anchor: Point, text: str, color: Color, thickness: int = 2) -> np.ndarray:
-    cv2.putText(image, text, anchor.int_xy_tuple, cv2.FONT_HERSHEY_SIMPLEX, 0.7, color.bgr_tuple, thickness, 2, False)
+    cv2.putText(image, text, anchor.int_xy_tuple, cv2.FONT_HERSHEY_DUPLEX, 0.3, color.bgr_tuple, thickness, 1, False)
     return image
 
 
@@ -242,13 +242,43 @@ class BaseAnnotator:
                 color=self.colors[detection.class_id],
                 thickness= self.thickness
             )
-            # annotated_image = draw_ellipse(
-            #     image=image,
-            #     rect=detection.rect,
-            #     color=self.colors[detection.class_id],
-            #     thickness=self.thickness
-            # )
         return annotated_image
     
 
+@dataclass
+class TextAnnotator:
+    background_color: List[Color]
+    text_colors: Color
+    text_thickness: int
 
+    def annotate(self, image: np.ndarray, detections: List[Detection]) -> np.ndarray:
+        annotated_image = image.copy()
+        for detection in detections:
+            # if tracker_id is not assigned skip annotation
+            if detection.tracker_id is None:
+                continue
+            
+            # calculate text dimensions
+            s = str(detection.class_name) +str(detection.tracker_id) + ": "+  str(round(detection.confidence, 1))
+            width, _ = detection.rect.get_dimensions
+            height = 10
+            # calculate text background position
+            center_x, center_y = detection.rect.top_left.int_xy_tuple
+            x = center_x 
+            y = center_y - height
+            
+            # draw background
+            annotated_image = draw_filled_rect(
+                image=annotated_image, 
+                rect=Rect(x=x, y=y, width=width, height=height).pad(padding=2), 
+                color=self.background_color[detection.class_id])
+            
+            # draw text
+            annotated_image = draw_text(
+                image=annotated_image, 
+                anchor=Point(x=x, y=y + height), 
+                text=s, 
+                color=self.text_colors, 
+                thickness=self.text_thickness
+            )
+        return annotated_image

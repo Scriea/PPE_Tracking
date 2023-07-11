@@ -18,9 +18,9 @@ from yolox.tracker.byte_tracker import BYTETracker, STrack
 IMG_FORMATS = 'bmp', 'dng', 'jpeg', 'jpg', 'mpo', 'png', 'tif', 'tiff', 'webp', 'pfm'  # include image suffixes
 VID_FORMATS = 'asf', 'avi', 'gif', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'ts', 'wmv', 'mp4'  # include video suffixes
 
-MODEL_PATH = os.path.join(ROOT, 'models', 'yolo','best.pt')
-SOURCE_PATH = os.path.join(ROOT, 'samples', 'empty.mp4')
-SOURCE_URL = "rtsp://rtsp:Rtsp1234@158.0.17.120:554/streaming/channels/1"
+MODEL_PATH = os.path.join(ROOT, 'models', 'yolo','yolov8n_e100_newdataset.pt')
+SOURCE_PATH = os.path.join(ROOT, 'samples', 'detection.mp4')
+SOURCE_URL = "rtsp://rtsp:Rtsp1234@158.0.17.112:554/streaming/channels/1"
 
 f , s = 0, 0
 cap = cv2.VideoCapture(SOURCE_PATH)
@@ -57,18 +57,18 @@ height = 640
 width = 640
 frame_id = 0
 results = []
-history = deque()
-
+ret = True
 # Process each frame in the video
 
 while cap.isOpened():
     ret, frame = cap.read()
+    
     if ret:
         r = 800 / frame.shape[1]
         dim = (800, int(frame.shape[0] * r))
-        results = model.predict(frame, iou = 0.3, verbose = False)
+        results = model.predict(frame, conf =0.1, iou = 0.3)               # verbose = False, stops printing logs
         detections = Detection.from_results(pred=results[0].boxes.data.detach().cpu().numpy(), names= ID2CLASSES)
-        ## Filter detections by class
+        
 
         # helmet_detections = filter_detections_by_class(detections, class_name="Helmet")
         # vest_detections = filter_detections_by_class(detections, class_name="Hi-Vis Jacket")
@@ -78,39 +78,35 @@ while cap.isOpened():
 
         # tracked_detections = helmet_detections + vest_detections + glove_detections + goggles_detections
 
-        if detections:
-                
+        output_results= detections2boxes(detections= detections)
 
+        # print("----------")
+        # print(type(output_results), output_results)
+        # print("----------")
+        
+        if len(output_results) > 0:
             tracks = tracker.update(
-                output_results= detections2boxes(detections= detections),
+                output_results= output_results,
                 img_info=frame.shape,
                 img_size= frame.shape
             )
             
             tracked_detections = match_detections_with_tracks(detections= detections, tracks= tracks)
-            # person_detections = match_detections_with_tracks(detections= person_detections, tracks=person_tracks)
-
             annotated_frame = frame.copy()
             annotated_frame = base_annotator.annotate(
                 image=annotated_frame, 
                 detections=tracked_detections
             )
-            # annotated_frame = base_annotator.annotate(
-            #     image=annotated_frame, 
-            #     detections=person_detections,
-            # )
             annotated_frame = text_annotator.annotate(
                 image=annotated_frame, 
                 detections= tracked_detections,
             )
-
             frame = results[0].plot()
-            
             print([detection.get_ids() for detection in tracked_detections])
             cv2.imshow("Image", cv2.resize(annotated_frame, dim, cv2.INTER_AREA))
-            #cv2.imshow("Image", results[0].plot())
         else:
-            cv2.imshow("Image", cv2.resize(frame,dim, cv2.INTER_AREA))
+            cv2.imshow("Image", cv2.resize(frame, dim, cv2.INTER_AREA))
+        #cv.imshow("Image", results[0].plot()
     if cv2.waitKey(1) == ord('q'):
         break
     

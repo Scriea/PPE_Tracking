@@ -161,6 +161,8 @@ def match_detections_with_tracks(
 ) -> List[Detection]:
     detection_boxes = detections2boxes(detections=detections, with_confidence=False)
     tracks_boxes = tracks2boxes(tracks=tracks)
+    if len(detection_boxes)==0 or len(tracks_boxes) == 0:
+        return detections
     iou = box_iou_batch(tracks_boxes, detection_boxes)
     track2detection = np.argmax(iou, axis=1)
     

@@ -1,8 +1,6 @@
 import os
 import cv2
 import sys
-import time
-import numpy as np
 from pathlib import Path
 from collections import deque
 from ultralytics import YOLO
@@ -13,7 +11,7 @@ from tracker.bytetrack import *
 ROOT = Path(__file__).resolve().parent
 sys.path.append(os.path.join(ROOT,"ByteTrack"))
 
-from yolox.tracker.byte_tracker import BYTETracker, STrack
+from yolox.tracker.byte_tracker import BYTETracker
 
 IMG_FORMATS = 'bmp', 'dng', 'jpeg', 'jpg', 'mpo', 'png', 'tif', 'tiff', 'webp', 'pfm'  # include image suffixes
 VID_FORMATS = 'asf', 'avi', 'gif', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'ts', 'wmv', 'mp4'  # include video suffixes
@@ -35,9 +33,7 @@ print(ID2CLASSES)
 text_scale = 1.5
 text_thickness = 1
 line_thickness = 2
-
 MIN_THRESHOLD = 0.001
-
 
 person_tracker = BYTETracker(BYTETrackerArgs())
 tracker = BYTETracker(BYTETrackerArgs())
@@ -53,8 +49,6 @@ text_annotator = TextAnnotator(
     text_thickness= text_thickness
 )
 
-height = 640
-width = 640
 frame_id = 0
 results = []
 ret = True
@@ -66,10 +60,9 @@ while cap.isOpened():
     if ret:
         r = 800 / frame.shape[1]
         dim = (800, int(frame.shape[0] * r))
-        results = model.predict(frame, conf =0.1, iou = 0.3)               # verbose = False, stops printing logs
+        results = model.predict(frame, conf =0.15, iou = 0.3)               # verbose = False, stops printing logs
         detections = Detection.from_results(pred=results[0].boxes.data.detach().cpu().numpy(), names= ID2CLASSES)
         
-
         # helmet_detections = filter_detections_by_class(detections, class_name="Helmet")
         # vest_detections = filter_detections_by_class(detections, class_name="Hi-Vis Jacket")
         # person_detections = filter_detections_by_class(detections, class_name="Person")
@@ -77,12 +70,7 @@ while cap.isOpened():
         # goggles_detections = filter_detections_by_class(detections, class_name="Protective Glasses")
 
         # tracked_detections = helmet_detections + vest_detections + glove_detections + goggles_detections
-
         output_results= detections2boxes(detections= detections)
-
-        # print("----------")
-        # print(type(output_results), output_results)
-        # print("----------")
         
         if len(output_results) > 0:
             tracks = tracker.update(
@@ -101,7 +89,7 @@ while cap.isOpened():
                 image=annotated_frame, 
                 detections= tracked_detections,
             )
-            frame = results[0].plot()
+            #frame = results[0].plot()
             print([detection.get_ids() for detection in tracked_detections])
             cv2.imshow("Image", cv2.resize(annotated_frame, dim, cv2.INTER_AREA))
         else:

@@ -42,7 +42,6 @@ class Detector:
         self.ID2CLASSES = self.model.names
         self.width = width
         self.height = height
-        
         self.cap = cv2.VideoCapture(self.SOURCE_PATH) if self.SOURCE_PATH else None
         # if self.cap:
         #     self.cap.set(3, width)
@@ -78,16 +77,17 @@ class Detector:
         return ret, None
     
     def predict(self):
+        ret = False
+        frame = None
         if not self.cap:
             return False, None
         if self.cap.isOpened():
             ret, frame = self.cap.read()         
             if not ret:
                 return ret, None
-            results = self.model.predict(frame, conf =0.15, iou = 0.3)
+            results = self.model.predict(frame, conf =0.3, iou = 0.15)
             detections = detections = Detection.from_results(pred=results[0].boxes.data.detach().cpu().numpy(), names= self.ID2CLASSES)
             output_results= detections2boxes(detections= detections)
-            
             if len(output_results) > 0:
                 tracks = self.tracker.update(
                     output_results= output_results,
@@ -101,17 +101,13 @@ class Detector:
                     image=frame, 
                     detections=tracked_detections
                 )
-                frame = text_annotator.annotate(
-                    image=frame, 
-                    detections= tracked_detections,
-                )
-                #frame = results[0].plot()
-            else:
-                pass
+                # frame = text_annotator.annotate(
+                #     image=frame, 
+                #     detections= tracked_detections,
+                # )
                 #frame = results[0].plot(line_width = 1, font_size = 0.1)
                 # frame = cv2.resize(frame, (self.width, self.height), interpolation= cv2.INTER_LINEAR)
 
             frame = cv2.cvtColor(cv2.resize(frame, (self.width, self.height), interpolation= cv2.INTER_LINEAR), cv2.COLOR_BGR2RGB)
-        return ret, frame
-        
-       # return False, None 
+
+        return ret, frame 

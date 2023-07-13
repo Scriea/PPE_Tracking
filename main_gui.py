@@ -20,7 +20,7 @@ Paths
 ROOT = os.getcwd()
 STREAM_SOURCE = os.path.join(ROOT,'stream.txt')
 ROOT = os.getcwd();
-MODEL_PATH = os.path.join(ROOT, 'models', 'yolo','yolov8n_e100_newdataset.pt')
+MODEL_PATH = os.path.join(ROOT, 'models', 'yolo','best.pt')
 
 
 try:

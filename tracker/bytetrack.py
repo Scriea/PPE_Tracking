@@ -273,10 +273,11 @@ class TextAnnotator:
             y = center_y - height
             
             # draw background
-            annotated_image = draw_filled_rect(
-                image=annotated_image, 
-                rect=Rect(x=x, y=y, width=width, height=height).pad(padding=2), 
-                color=self.background_color[detection.class_id])
+            # annotated_image = draw_filled_rect(
+            #     image=annotated_image, 
+            #     rect=Rect(x=x, y=y, width=width, height=height).pad(padding=2), 
+            #     color=self.background_color[detection.class_id]
+            # )
             
             # draw text
             annotated_image = draw_text(
